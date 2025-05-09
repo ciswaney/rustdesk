@@ -1,0 +1,35 @@
+name: Update hbb_common Submodule
+
+on:
+  workflow_dispatch:  # 手動觸發
+  schedule:
+    - cron: '0 2 * * *'  # 每天凌晨 2 點 (UTC) 執行
+
+jobs:
+  update-submodule:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout parent repo with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Update hbb_common submodule
+        run: |
+          cd libs/hbb_common
+          git checkout main
+          git pull origin main
+          cd ../..
+          git add libs/hbb_common
+          git commit -m "ci: update hbb_common submodule to latest main" || echo "No changes to commit"
+
+      - name: Push changes
+        run: |
+          git push origin HEAD:${{ github.ref_name }}
